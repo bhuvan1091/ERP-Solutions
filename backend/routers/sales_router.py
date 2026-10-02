@@ -25,13 +25,18 @@ def _so_number(db: Session) -> str:
 
 
 def _so_out(so: SalesOrder) -> SOOut:
+    # Resolve batch numbers in bulk
+    batch_ids = {l.allocated_batch_id for l in so.lines if l.allocated_batch_id}
+    batch_map = {}
+    if batch_ids:
+        from models import InventoryBatch as _IB
+        from sqlalchemy.orm import object_session
+        sess = object_session(so)
+        if sess is not None:
+            rows = sess.query(_IB).filter(_IB.id.in_(batch_ids)).all()
+            batch_map = {b.id: b.batch_number for b in rows}
     lines = []
     for l in so.lines:
-        bn = None
-        if l.allocated_batch_id:
-            b = next((bb for bb in [l.__dict__.get("_allocated_batch")] if bb), None)
-            if not b:
-                b = None
         lines.append(SOLineOut(
             id=l.id, product_id=l.product_id,
             product_sku=l.product.sku if l.product else None,
@@ -40,7 +45,7 @@ def _so_out(so: SalesOrder) -> SOOut:
             unit_price=l.unit_price, tax_rate=l.tax_rate,
             discount=l.discount, line_total=l.line_total,
             allocated_batch_id=l.allocated_batch_id,
-            allocated_batch_number=None,
+            allocated_batch_number=batch_map.get(l.allocated_batch_id),
         ))
     return SOOut(
         id=so.id, so_number=so.so_number,

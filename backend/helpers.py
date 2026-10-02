@@ -1,7 +1,20 @@
 """Helpers used across routers."""
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from models import AuditLog, User
+
+
+def _jsonable(v):
+    if isinstance(v, Decimal):
+        return str(v)
+    if isinstance(v, (datetime, date)):
+        return v.isoformat()
+    if isinstance(v, dict):
+        return {k: _jsonable(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [_jsonable(x) for x in v]
+    return v
 
 
 def log_audit(db: Session, user: User | None, action: str, entity_type: str,
@@ -13,7 +26,7 @@ def log_audit(db: Session, user: User | None, action: str, entity_type: str,
         action=action,
         entity_type=entity_type,
         entity_id=entity_id,
-        details=details or {},
+        details=_jsonable(details or {}),
     )
     db.add(log)
 

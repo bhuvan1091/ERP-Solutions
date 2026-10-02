@@ -1,0 +1,44 @@
+{
+  "summary": "Full backend + frontend review of Phase 1 Nutrition ERP. 24/24 backend tests pass covering Auth, RBAC, Products, Suppliers, Customers, Warehouses, Inventory (filters/adjust/negative-guard), full PO->GRN lifecycle, SO FEFO allocate+dispatch, Dashboard shape, Advertising, Audit logs. Frontend login reaches dashboard, 8 KPI tiles render, 14-day revenue + campaign charts render, Products (14 seeded shown), PO-2026-00001 present, SOs listed, Advertising shows 5 connected platforms + 8 campaigns, Inventory Adjust modal opens.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "PATCH /api/products/{id} (and any audited mutation containing Decimal fields)", "issue": "AuditLog.details column (JSON) failed to serialize Decimal values -> 500 Internal Server Error. Root cause in /app/backend/helpers.py log_audit stored raw dicts containing Decimal from Pydantic payloads. FIXED by adding _jsonable converter.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/products", "issue": "SKU auto-generation uses count(*)+1 pattern => UniqueViolation when existing seeded SKUs collide with the auto-generated base pattern (eg two 'TEST_...' products both get 'TEST-00015'). Not race-safe and not collision-safe with pre-existing SKUs. Workaround: client supplies explicit sku."},
+      {"endpoint": "POST /api/warehouses, POST /api/goods-receipts, POST /api/purchase-orders etc", "issue": "Same count+1 numbering antipattern across PO/GRN/SO/Supplier/Customer code generators - works in dev but not concurrency safe."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard (initial render)", "issues": ["Recharts emits width(-1)/height(-1) console warnings on first paint before ResizeObserver settles. Cosmetic only; charts render correctly afterwards."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/backend_test.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Audit log Decimal serialization fix already applied in /app/backend/helpers.py (added _jsonable). Please review and keep.",
+    "Replace count(*)+1 based auto numbering (SKU, PO#, GRN#, SO#, supplier code, customer code, warehouse code) with race-safe sequence (DB sequence, UUID suffix, or retry-on-conflict) before production.",
+    "Optionally set a min width on the dashboard chart container to suppress Recharts first-paint warnings."
+  ],
+  "critical_code_review_comments": [
+    "helpers.log_audit stored Pydantic-derived dicts into JSON column without sanitising Decimal/date -> 500 on any UPDATE path with price/qty fields. Pattern-wide risk.",
+    "All *_number()/_gen_code() helpers use `count(*) + 1` -> not concurrency-safe and prone to UniqueViolation when SKUs/codes with that pattern already exist.",
+    "sales_router _so_out references a leftover `l.__dict__.get('_allocated_batch')` placeholder and always returns `allocated_batch_number=None` even after allocation - minor UX issue in SO detail view.",
+    "dashboard_router contains dead code block `) if False else []` (lines ~140) - harmless but should be removed.",
+    "server.py uses deprecated @app.on_event('startup') (Pydantic v2 / FastAPI lifespan preferred).",
+    "Startup Base.metadata.create_all + seed_if_empty is OK for Phase 1 but Alembic migrations should be added before Phase 2."
+  ],
+  "updated_files": [
+    "/app/backend/helpers.py (fixed JSON serialization for Decimal/date in audit log)",
+    "/app/backend/tests/backend_test.py (new comprehensive end-to-end suite, 24 tests)"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% of covered flows"},
+  "test_credentials": "Read from /app/memory/test_credentials.md - used admin/md/procurement/warehouse/sales/rep accounts, all authenticated successfully.",
+  "seed_data_creation": "Tests created TEST_-prefixed Products/Suppliers/Customers/Warehouses, 2 POs (new flow + seed), 2 SOs (FEFO + insufficient-stock cases). All marked for cleanup via TEST_ prefix.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests are in /app/backend/tests/backend_test.py and run serial (-n 0) due to shared preview backend. Fixtures reuse session-scoped JWTs. One real backend bug fixed in helpers.py (Decimal in audit JSON). SKU/code auto-numbering uses count+1 which is not race safe - tests supply explicit sku to work around. FEFO test accepts tie-breaks when multiple batches share the earliest expiry.",
+  "rca of the issue": "Audit UPDATE 500: helpers.log_audit persisted Pydantic payload dicts directly into AuditLog.details (JSON column). psycopg2 json_serializer uses stdlib json which raises TypeError on Decimal. Reproduced via PATCH /api/products/{id} with {'selling_price':399}. Fix: convert Decimal->str and date/datetime->isoformat recursively before persisting."
+}
