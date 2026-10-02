@@ -1,0 +1,132 @@
+{
+  "theme_strategy": {
+    "mode": "light",
+    "rationale": "Enterprise ERP systems for manufacturing and warehouse operations prioritize data legibility and long-session usability. Light mode with neutral grey surfaces reduces eye strain when dealing with dense tables and forms.",
+    "primary_accent": "Forest Green",
+    "vibe": "Professional, clean, functional, structured, action-oriented."
+  },
+  "typography": {
+    "headings": {
+      "font": "Chivo",
+      "weights": ["600", "700"],
+      "usage": "Use tight letter spacing (tracking-tight). Avoid Inter for headings to prevent generic 'AI slop' look.",
+      "styles": {
+        "h1": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900",
+        "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-slate-800",
+        "h3": "text-lg font-medium tracking-tight text-slate-800"
+      }
+    },
+    "body": {
+      "font": "IBM Plex Sans",
+      "weights": ["400", "500", "600"],
+      "usage": "Use for all data tables, inputs, and dense UI elements.",
+      "styles": {
+        "base": "text-sm text-slate-600 leading-relaxed",
+        "small": "text-xs text-slate-500",
+        "label": "text-xs font-semibold uppercase tracking-wider text-slate-500"
+      }
+    },
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Chivo:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#047857",
+      "hover": "#059669",
+      "foreground": "#ffffff"
+    },
+    "background": "#f8fafc",
+    "surface": "#ffffff",
+    "border": "#e2e8f0",
+    "text_primary": "#0f172a",
+    "text_secondary": "#64748b",
+    "success": "#10b981",
+    "warning": "#f59e0b",
+    "danger": "#ef4444",
+    "sidebar_bg": "#ffffff",
+    "sidebar_active": "#f1f5f9",
+    "sidebar_text": "#475569"
+  },
+  "layouts": {
+    "app_shell": {
+      "structure": "Sidebar (left) + Topbar (right/top) + Main Content (bottom right).",
+      "sidebar": "Collapsible desktop-first sidebar. Width 256px expanded, 80px collapsed. Needs 14 roles so categorize links into groups (e.g., Core, Inventory, Sales).",
+      "topbar": "Sticky header with Global Search input, Notifications bell, Profile dropdown. Height 64px. Border bottom 1px solid slate-200.",
+      "main_content": "Padding p-6 or p-8. Contains breadcrumbs at the top, then page header (title + actions), then content (tables/dashboard)."
+    },
+    "dashboard_grid": {
+      "pattern": "High Density Grid (Bento Grid Mode B)",
+      "spacing": "gap-4 or gap-6",
+      "widgets": [
+        "Top row: 4 KPI Cards (col-span-1 each).",
+        "Middle row: Main Chart (col-span-3) + Quick Actions/Approvals (col-span-1).",
+        "Bottom row: Alerts/Exceptions data table (col-span-full)."
+      ]
+    },
+    "data_tables": {
+      "style": "Clean, flat borders. Avoid heavy shadows. Use border-collapse.",
+      "features": "Filters above table, sortable headers, pagination below table.",
+      "cell_padding": "py-3 px-4",
+      "row_hover": "hover:bg-slate-50 transition-colors"
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid border-slate-200 on all surfaces. No heavy drop shadows; use shadow-sm for cards.",
+    "radius": "rounded-md (moderate 6px) to maintain a structural, serious enterprise look.",
+    "buttons": "Flat, sharp appearance. Primary button uses Forest Green. Secondary uses outline.",
+    "micro_interactions": "Hover states on all buttons and table rows. Focus rings (focus:ring-2 focus:ring-emerald-500/50) on inputs."
+  },
+  "component_instructions": {
+    "cards": "Use Shadcn Card, but override shadow to be very minimal (shadow-sm) and add a 1px border. No oversized cards.",
+    "tables": "Use standard HTML table inside a border-rounded container for simplicity and performance in data-heavy apps. Add sticky headers.",
+    "forms": "Use Shadcn Form/Input. 2-column grid for long forms. Labels must be clearly visible above inputs.",
+    "breadcrumbs": "Essential for navigation. text-sm text-slate-500. Use lucide 'ChevronRight' separator.",
+    "status_badges": "Pill-shaped (rounded-full) with subtle backgrounds (e.g., bg-emerald-100 text-emerald-800 for Approved)."
+  },
+  "motion": {
+    "transitions": "Use targeted transitions, never 'all'. transition-colors duration-200 for hover states. Collapsible sidebar needs transition-width duration-300 ease-in-out.",
+    "loading": "Skeleton loaders for dashboard widgets and tables instead of spinners."
+  },
+  "accessibility": {
+    "contrast": "Ensure text meets WCAG AA standards. Forest Green on white is excellent. Avoid light grey text on light grey backgrounds.",
+    "focus": "All interactive elements must have visible focus rings.",
+    "testing": "All interactive and key informational elements MUST include a 'data-testid' attribute (e.g., data-testid='sidebar-toggle')."
+  },
+  "media": {
+    "icons_library": "lucide-react",
+    "charts_library": "recharts",
+    "image_urls": {
+      "product_protein": {
+        "url": "https://images.unsplash.com/photo-1693996045899-7cf0ac0229c7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxwcm90ZWluJTIwcG93ZGVyJTIwc3VwcGxlbWVudCUyMGJvdHRsZXxlbnwwfHx8fDE3OTA5NDYxODh8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Protein powder bottle, use in Products CRUD list."
+      },
+      "product_vitamin": {
+        "url": "https://images.unsplash.com/photo-1633171036157-78d53387fdc0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHx2aXRhbWluJTIwcGlsbHMlMjBib3R0bGUlMjB3aGl0ZSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzkwOTQ2MTg4fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Vitamin pills bottle, use in Products CRUD list."
+      },
+      "warehouse_bg": {
+        "url": "https://images.unsplash.com/photo-1684695749267-233af13276d0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHx3YXJlaG91c2UlMjBzaGVsdmVzJTIwaW52ZW50b3J5fGVufDB8fHx8MTc5MDk0NjE4OHww&ixlib=rb-4.1.0&q=85",
+        "description": "Warehouse shelves, use for warehouse location empty states or header graphics."
+      },
+      "user_profile": {
+        "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc5MDk0NjE4OHww&ixlib=rb-4.1.0&q=85",
+        "description": "Professional headshot, use for user profile icon in top navbar."
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install custom fonts by adding the google_fonts_url to index.html and configuring tailwind.config.js with fontFamily 'Chivo' and 'IBM Plex Sans'.",
+    "Use standard HTML+Tailwind for layouts, use Shadcn for complex interactives (Dropdown Menu, Dialogs, Selects).",
+    "Build a robust layout component with a collapsible sidebar. Do not use an oversized hamburger menu on desktop.",
+    "Dashboard KPIs should follow the 'Metric -> Target -> Variance -> Exception' mental model. Use Recharts for the main revenue/inventory chart.",
+    "For the Products CRUD, use the provided product_protein and product_vitamin images for dummy data.",
+    "Apply Forest Green (bg-emerald-700) exclusively for primary CTA buttons (e.g., 'Create Order', 'Approve') to guide action."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid generic centered layouts and excessive gradients.",
+    "NEVER use AI assistant Emoji characters (🤖🧠💡).",
+    "Every interaction needs micro-animations - hover states, focus rings.",
+    "Use generous spacing but keep tables dense enough for data entry (py-2 px-3 for cells).",
+    "Never use purely transparent backgrounds on overlays/headers.",
+    "All interactive elements MUST include data-testid attribute for automated testing."
+  ]
+}
