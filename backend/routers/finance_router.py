@@ -34,15 +34,17 @@ from __future__ import annotations
 from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import func, and_
 from typing import List, Optional
+from io import BytesIO
 
 from database import get_db
 from models import (
     Account, JournalEntry, JournalEntryLine, Invoice, InvoiceLine, Payment,
     Customer, Supplier, SalesOrder, SalesOrderLine, PurchaseOrder, PurchaseOrderLine,
-    GoodsReceipt, GoodsReceiptLine, InventoryBatch, User,
+    GoodsReceipt, GoodsReceiptLine, InventoryBatch, User, Company,
     AccountType, InvoiceType, InvoiceStatus, PaymentDirection, PaymentMethod,
     SalesOrderStatus,
 )
@@ -58,6 +60,7 @@ from finance_schemas import (
 )
 from auth import require_permission
 from helpers import log_audit
+from invoice_pdf import generate_invoice_pdf
 
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
@@ -363,6 +366,23 @@ def get_invoice(invoice_id: str, db: Session = Depends(get_db),
     if not inv:
         raise HTTPException(404, "Invoice not found")
     return _invoice_out(inv)
+
+
+@router.get("/invoices/{invoice_id}/pdf")
+def download_invoice_pdf(invoice_id: str, db: Session = Depends(get_db),
+                         _: User = Depends(require_permission("finance:read"))):
+    inv = db.query(Invoice).options(
+        selectinload(Invoice.lines).selectinload(InvoiceLine.product),
+    ).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(404, "Invoice not found")
+    company = db.query(Company).first()
+    pdf_bytes = generate_invoice_pdf(inv, company)
+    headers = {
+        "Content-Disposition": f'inline; filename="{inv.invoice_number}.pdf"',
+        "Cache-Control": "no-store",
+    }
+    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers=headers)
 
 
 # ----- Customer invoice from Sales Order -----

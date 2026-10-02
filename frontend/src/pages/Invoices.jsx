@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Receipt, FilePlus2, Wallet, Ban, FileDown, Eye } from "lucide-react";
+import { Receipt, FilePlus2, Wallet, Ban, FileDown, Eye, Printer } from "lucide-react";
 import { PageHeader, Card, CardHeader, DataTable, StatusBadge, EmptyState, Select, Label, Button, Modal, Input, Textarea } from "../components/UI";
-import { endpoints } from "../lib/api";
+import { endpoints, API } from "../lib/api";
 import { fmtCurrency, fmtDate, fmtDateTime, fmtNumber } from "../lib/format";
 import { useAuth } from "../lib/auth";
 
@@ -49,6 +49,32 @@ const Invoices = () => {
         setDetail(data);
     };
 
+    const downloadPdf = async (inv, action = "preview") => {
+        try {
+            const token = localStorage.getItem("erp_token");
+            const resp = await fetch(`${API}/finance/invoices/${inv.id}/pdf`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!resp.ok) throw new Error("PDF download failed");
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            if (action === "download") {
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${inv.invoice_number}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                window.open(url, "_blank", "noopener");
+            }
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        } catch (e) {
+            console.error(e);
+            alert("Could not download PDF. Please try again.");
+        }
+    };
+
     const columns = [
         { key: "invoice_number", label: "Invoice#", render: (r) => <button onClick={() => openDetail(r.id)} data-testid={`view-inv-${r.id}`} className="font-mono text-xs text-forest-700 hover:underline">{r.invoice_number}</button> },
         { key: "party", label: tab === "CUSTOMER" ? "Customer" : "Supplier", render: (r) => <span className="text-sm font-medium text-slate-900">{r.customer_name || r.supplier_name}</span> },
@@ -57,6 +83,18 @@ const Invoices = () => {
         { key: "total", label: "Total", render: (r) => <span className="tabular-nums font-semibold text-sm">{fmtCurrency(r.total)}</span> },
         { key: "paid", label: "Paid / Due", render: (r) => <div className="text-xs tabular-nums"><div className="text-emerald-700">{fmtCurrency(r.amount_paid)}</div><div className="text-rose-700">{fmtCurrency(r.amount_due)}</div></div> },
         { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
+        {
+            key: "pdf", label: "", render: (r) => (
+                <div className="flex gap-1 justify-end">
+                    <button data-testid={`inv-pdf-${r.id}`} title="Preview PDF" onClick={(e) => { e.stopPropagation(); downloadPdf(r, "preview"); }} className="p-1 text-slate-400 hover:text-forest-700 transition-colors">
+                        <Printer className="w-4 h-4" />
+                    </button>
+                    <button data-testid={`inv-download-${r.id}`} title="Download PDF" onClick={(e) => { e.stopPropagation(); downloadPdf(r, "download"); }} className="p-1 text-slate-400 hover:text-forest-700 transition-colors">
+                        <FileDown className="w-4 h-4" />
+                    </button>
+                </div>
+            )
+        },
     ];
 
     return (
@@ -138,6 +176,12 @@ const Invoices = () => {
                                 {detail.cogs_amount > 0 && <> • <strong>COGS:</strong> <span className="tabular-nums">{fmtCurrency(detail.cogs_amount)}</span></>}
                             </div>
                             <div className="flex gap-2">
+                                <Button data-testid="inv-detail-preview-pdf" size="sm" variant="outline" onClick={() => downloadPdf(detail, "preview")}>
+                                    <Printer className="w-3.5 h-3.5" /> Preview PDF
+                                </Button>
+                                <Button data-testid="inv-detail-download-pdf" size="sm" variant="outline" onClick={() => downloadPdf(detail, "download")}>
+                                    <FileDown className="w-3.5 h-3.5" /> Download
+                                </Button>
                                 {detail.status !== "CANCELLED" && detail.status !== "PAID" && hasPermission("finance:write") && (
                                     <Button data-testid="record-payment-btn" size="sm" onClick={() => { setPayForm({ ...payForm, amount: detail.amount_due }); setPayOpen(true); }}>
                                         <Wallet className="w-3.5 h-3.5" /> Record {detail.invoice_type === "CUSTOMER" ? "receipt" : "payment"}

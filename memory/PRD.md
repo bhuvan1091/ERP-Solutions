@@ -156,3 +156,27 @@ Every posting is validated: `sum(debits) == sum(credits)` (±1 paisa).
 - `count(*)+1` numbering debt (SKU/PO/GRN/SO/INV/BILL/PAY/JE) → race-safe DB sequences.
 - Alembic migrations before Phase 3.
 - Decimal `.quantize(0.01)` throughout for tax rounding safety on very large invoices.
+
+---
+
+## Phase 2.1 — Printable PDF Invoices (Oct 2026)
+
+### Shipped
+- **One-click PDF generation** for both customer invoices (TAX INVOICE) and supplier bills (PURCHASE BILL).
+- Professional A4 GST-style layout: company header with GSTIN + FSSAI, forest-green TAX INVOICE title bar, bill-to / ship-to blocks, line items table with HSN/qty/rate/disc/tax/amount, auto-split CGST+SGST, totals block, **amount in words (Indian numbering)**, paid vs balance due, terms & conditions, authorised signatory block.
+- Uses `reportlab==4.2.5` + `num2words==0.5.14` (pure-Python, no native deps).
+
+### Endpoint
+```
+GET /api/finance/invoices/{invoice_id}/pdf   → application/pdf stream
+```
+Requires `finance:read`. Returns 404 for missing invoice, 403 for unauthorised user.
+
+### UI
+- Invoice list rows: inline **Printer** (preview in new tab) + **Download** (save as `INV-YYYY-NNNNN.pdf`) icons on every row.
+- Invoice detail modal: **Preview PDF** and **Download** buttons alongside Record receipt / Cancel actions.
+- All actions use fetch + Blob + object-URL so the authenticated token is included.
+
+### Verified
+- Backend: Admin (200), sales rep (403), missing invoice (404), supplier bill (200, 1-page valid PDF).
+- Frontend: Modal captured showing 4 action buttons; row-level icon buttons rendered on every invoice.
