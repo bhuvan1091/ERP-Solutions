@@ -101,3 +101,58 @@ Super Admin, Company Admin, Managing Director, Finance Mgr, Procurement Mgr, War
     ├── PurchaseOrders.jsx, SalesOrders.jsx
     ├── Advertising.jsx, Users.jsx, Audit.jsx
 ```
+
+---
+
+## Phase 2 — Finance module (Oct 2026)
+
+Shipped: Chart of Accounts, double-entry journal engine, AR invoices from Sales Orders, AP bills from Goods Receipts, Payments (receipts / disbursements), finance reports.
+
+### New endpoints
+```
+GET  /api/finance/accounts              # 17 system accounts auto-seeded
+POST /api/finance/accounts
+GET  /api/finance/accounts/balances
+GET  /api/finance/invoices              # ?invoice_type=CUSTOMER|SUPPLIER
+GET  /api/finance/invoices/{id}
+POST /api/finance/invoices/from-sales-order
+POST /api/finance/invoices/from-grn
+POST /api/finance/invoices/{id}/cancel  # reverses journal
+GET  /api/finance/payments
+POST /api/finance/payments              # auto-infers direction from invoice
+GET  /api/finance/journal-entries
+POST /api/finance/journal-entries       # manual balanced entry
+GET  /api/finance/reports/trial-balance
+GET  /api/finance/reports/profit-loss
+GET  /api/finance/reports/ar-aging
+GET  /api/finance/reports/ap-aging
+```
+
+### Posting rules
+| Transaction | Journal |
+|---|---|
+| Customer invoice (from SO) | Dr AR, Cr Sales Revenue, Cr GST Output; **plus** Dr COGS, Cr Inventory (using allocated-batch cost) |
+| Supplier bill (from GRN) | Dr Inventory, Dr GST Input, Cr AP |
+| Receipt (customer pays) | Dr Bank/Cash, Cr AR |
+| Payment (we pay supplier) | Dr AP, Cr Bank/Cash |
+| Invoice cancel | Reverses the original entry (sets `is_reversed=true` + new REVERSAL journal entry) |
+
+Every posting is validated: `sum(debits) == sum(credits)` (±1 paisa).
+
+### Frontend
+- `/invoices` with Customer / Supplier tabs, detail modal, inline "Record receipt / payment" that posts a payment and updates the invoice status.
+- `/payments` list with direction filter.
+- `/journal` list + detail modal showing the balanced line breakdown.
+- `/finance-reports` with 4 tabs: Trial Balance (shows "Balanced" indicator), P&L (Income/Expenses/Net card), AR Aging, AP Aging (bucketed Current / 1-30 / 31-60 / 61-90 / >90).
+- Sales Orders page: `Generate invoice` action on DISPATCHED rows.
+- Purchase Orders page: new `Goods Receipts` tab with `Create supplier bill` action.
+
+### Testing status
+- 20/20 Phase 2 finance tests pass (`/app/backend/tests/test_finance.py`).
+- 24/24 Phase 1 tests still green.
+- Live-system check: Trial Balance balances to the paisa; P&L correctly computes Net profit = Sales - COGS (₹749 after seed demo postings).
+
+### Backlog carried forward
+- `count(*)+1` numbering debt (SKU/PO/GRN/SO/INV/BILL/PAY/JE) → race-safe DB sequences.
+- Alembic migrations before Phase 3.
+- Decimal `.quantize(0.01)` throughout for tax rounding safety on very large invoices.

@@ -375,8 +375,8 @@ def create_invoice_from_so(
     so = db.query(SalesOrder).filter(SalesOrder.id == payload.sales_order_id).first()
     if not so:
         raise HTTPException(404, "Sales order not found")
-    if so.status not in (SalesOrderStatus.DISPATCHED, SalesOrderStatus.ALLOCATED, SalesOrderStatus.INVOICED):
-        raise HTTPException(400, f"SO {so.so_number} not in invoiceable state ({so.status})")
+    if so.status != SalesOrderStatus.DISPATCHED:
+        raise HTTPException(400, f"SO {so.so_number} must be DISPATCHED to invoice (current: {so.status.value})")
     if db.query(Invoice).filter(Invoice.sales_order_id == so.id, Invoice.status != InvoiceStatus.CANCELLED).first():
         raise HTTPException(400, "Invoice for this sales order already exists")
 

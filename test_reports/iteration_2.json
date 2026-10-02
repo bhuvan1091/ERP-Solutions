@@ -1,0 +1,50 @@
+{
+  "summary": "Phase 2 Finance module tested end-to-end. 20/20 new backend tests pass (test_finance.py) covering 17 system accounts seed, RBAC (sales mgr read / rep blocked / finance:write enforced), customer invoice from DISPATCHED SO (INV-YYYY-NNNNN, status=POSTED, SO flips to INVOICED, cogs_amount>0, balanced journal Dr AR / Cr Sales+GST / Dr COGS / Cr Inventory), rejection of invoicing INVOICED or CONFIRMED SOs, supplier bill from GRN (BILL-YYYY-NNNNN, Dr Inventory + Dr GST Input / Cr AP), duplicate-GRN-bill blocked, type filter disjoint, full RECEIPT payment flips invoice to PAID (Dr Bank, Cr AR), partial-then-full payment flow (PARTIALLY_PAID -> PAID), overpayment rejected (400), cancel-with-payments blocked, cancel-unpaid reverses journal (is_reversed=true + REVERSAL entry), trial balance is_balanced=true, P&L income/expenses, AR/AP aging shape, manual balanced journal success + unbalanced rejected, audit entries for Invoice/Payment/JournalEntry. Frontend: Admin login works, Finance sidebar group renders Invoices/Payments/Journal Entries/Finance Reports. /invoices renders with 6 customer invoice rows and Customer/Supplier tabs. /finance-reports exposes all 4 fr-tab-* testids, Trial Balance shows 'Balanced' indicator, P&L shows Income/Expenses/Net, AR aging shows bucket columns. /journal lists 14 JE rows. /sales-orders exposes 3 invoice-so-* actions. /purchase-orders Goods Receipts tab exposes 4 bill-grn-* actions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/finance/invoices/from-sales-order", "issue": "Also accepts an ALLOCATED (not just DISPATCHED) SO per the status whitelist in finance_router.py line ~378 (DISPATCHED, ALLOCATED, INVOICED). Spec said only DISPATCHED should be invoiceable."},
+      {"endpoint": "POST /api/finance/invoices/from-sales-order", "issue": "Status whitelist includes INVOICED, so re-invoicing is prevented only by the subsequent uniqueness check (Invoice.sales_order_id). Works but logic order is confusing."},
+      {"endpoint": "finance numbering (_next_invoice_number / _next_entry_number / _next_payment_number)", "issue": "Same count(*)+1 antipattern as Phase 1 - not concurrency safe (known debt carried over)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Invoice detail modal", "issue": "Opening a customer invoice modal did not surface the journal_entry_id (no 'JE-' substring visible) or a visible 'Record receipt' button text in the modal body. Could be gated by status label or hidden under an action menu. Please verify UI labels/wiring.", "affected_selectors": ["invoice detail modal, 'Record receipt' action"]}
+    ],
+    "design_issues": [
+      {"screen": "Trial Balance tab", "issues": ["No visible 'Debit'/'Credit' header text in page body - likely only short Dr/Cr labels or icons; consider adding explicit column headers for clarity."]},
+      {"screen": "Journal entry modal", "issues": ["Opened JE modal did not expose literal 'Debit' / 'Credit' column text; verify lines are shown with proper headers."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_finance.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/finance_results.xml"
+  ],
+  "action_items": [
+    "Consider tightening SO status whitelist in /api/finance/invoices/from-sales-order to only DISPATCHED (currently also allows ALLOCATED).",
+    "Invoice detail modal should visibly show journal_entry_id (JE-...) and a 'Record receipt' CTA for POSTED customer invoices - verify in UI.",
+    "Trial Balance / Journal entry modals should expose 'Debit' and 'Credit' column headers for readability.",
+    "Replace count(*)+1 numbering with race-safe sequence (Phase 1 debt still open)."
+  ],
+  "critical_code_review_comments": [
+    "finance_router._post_journal uses abs(total_dr - total_cr) > Decimal('0.01') with Decimal subtraction of sum(...) - sum uses int 0 as start which Python widens to Decimal fine, but tax calculations like line_sub * Decimal(sol.tax_rate)/Decimal(100) are not quantized to 2dp; rounding differences could theoretically cross the 0.01 tolerance for very large invoices. Consider explicit .quantize(Decimal('0.01')) throughout.",
+    "create_invoice_from_so permits SO status ALLOCATED in addition to DISPATCHED - this contradicts the stated invariant that only dispatched goods are billable.",
+    "In create_bill_from_grn, if a GRN line's PO line is missing, falls back to tax_rate 18% silently - should raise 400 instead.",
+    "Payment overpayment check uses `amount - due > Decimal('0.01')` which allows a 1 paisa over - intentional? Could be made strict.",
+    "ensure_system_accounts()+db.commit() is called on every /accounts and /trial-balance GET - fine but adds a commit even when nothing changes. Idempotent flush is enough.",
+    "Known Phase 1 debt: count(*)+1 numbering used again for invoices / payments / journal entries."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_finance.py (new - 20 Phase 2 finance tests)"
+  ],
+  "success_rate": {"backend": "100% (20/20 finance + 24/24 Phase 1 unchanged)", "frontend": "100% of covered Finance UI flows (sidebar + 5 pages + testids verified)"},
+  "test_credentials": "Used /app/memory/test_credentials.md - admin/md/procurement/warehouse/sales/rep/finance all authenticate.",
+  "seed_data_creation": "Tests create fresh dispatched SOs, PO->GRN chains, invoices, payments, reversals. All multi-byte uniqued via uuid suffixes so no cross-run collisions.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Finance tests live at /app/backend/tests/test_finance.py and are self-isolating (each test provisions its own SO/GRN). Trial balance stays balanced across repeated runs. Known tolerated behaviors: finance_router allows invoicing an ALLOCATED SO (not just DISPATCHED). Numbering is count(*)+1 (phase1 debt). Dispatched SOs picked by test need warehouse with released batches with cost_per_unit>0 (Bengaluru main warehouse works).",
+  "rca of the issue": "No new backend bugs found. Minor spec deviations noted above (SO ALLOCATED acceptance) are reported for main agent review but do not break any required flow."
+}
