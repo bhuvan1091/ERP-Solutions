@@ -85,7 +85,7 @@ const Products = () => {
             render: (r) => (
                 <div className="flex items-center gap-3">
                     {r.image_url ? (
-                        <img src={r.image_url} alt="" className="w-9 h-9 object-cover rounded border border-slate-200" />
+                        <img src={r.image_url} alt={r.name} className="w-11 h-11 shrink-0 object-contain rounded-md border border-slate-200 bg-white p-1" />
                     ) : (
                         <div className="w-9 h-9 rounded border border-slate-200 bg-slate-50 flex items-center justify-center"><PkgIcon className="w-4 h-4 text-slate-400" /></div>
                     )}
@@ -103,7 +103,7 @@ const Products = () => {
         { key: "status", label: "Status", render: (r) => <StatusBadge status={r.status} /> },
         {
             key: "actions", label: "", render: (r) => hasPermission("product:write") && (
-                <button data-testid={`edit-product-${r.id}`} onClick={() => openEdit(r)} className="text-slate-400 hover:text-forest-700 p-1">
+                <button data-testid={`edit-product-${r.id}`} title="Edit product" aria-label={`Edit ${r.name}`} onClick={() => openEdit(r)} className="text-slate-400 hover:text-forest-700 hover:bg-forest-50 rounded-md p-2">
                     <Pencil className="w-4 h-4" />
                 </button>
             )
@@ -114,7 +114,7 @@ const Products = () => {
         <div data-testid="products-page">
             <PageHeader
                 title="Products"
-                description="Finished goods, raw materials, packaging — single source of truth for SKUs, pricing and batch rules."
+                description="Your product catalog, pricing and stock at a glance."
                 breadcrumbs={[{ label: "Catalog" }, { label: "Products" }]}
                 actions={hasPermission("product:write") && (
                     <Button data-testid="new-product-btn" onClick={openCreate}><Plus className="w-4 h-4" /> New product</Button>

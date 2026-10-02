@@ -37,68 +37,35 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex" data-testid="login-page">
-            {/* Left panel */}
-            <div className="hidden lg:flex flex-1 bg-forest-700 text-white p-12 flex-col justify-between relative overflow-hidden">
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-white text-forest-700 flex items-center justify-center font-heading font-bold text-lg">G</div>
-                        <div>
-                            <div className="font-heading font-bold text-xl">GreenPeak</div>
-                            <div className="text-xs text-forest-100 uppercase tracking-wider">Nutrition ERP</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="relative z-10">
-                    <h1 className="font-heading text-4xl font-bold leading-tight mb-4">
-                        Run the nutrition business end-to-end.
-                    </h1>
-                    <p className="text-forest-100 text-sm max-w-md leading-relaxed">
-                        Procurement, batch & expiry tracking, FEFO dispatch, sales, finance posting and campaign attribution — in one enterprise workspace.
-                    </p>
-                    <div className="grid grid-cols-3 gap-6 mt-10 text-xs">
-                        <div>
-                            <div className="text-forest-200 uppercase tracking-wider mb-1">Phase 1</div>
-                            <div className="font-semibold">10 Core modules</div>
-                        </div>
-                        <div>
-                            <div className="text-forest-200 uppercase tracking-wider mb-1">Roles</div>
-                            <div className="font-semibold">14 role templates</div>
-                        </div>
-                        <div>
-                            <div className="text-forest-200 uppercase tracking-wider mb-1">Traceability</div>
-                            <div className="font-semibold">Batch + FEFO</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-forest-600 opacity-50"></div>
-                <div className="absolute -right-10 top-20 w-56 h-56 rounded-full bg-forest-800 opacity-40"></div>
+        <div className="min-h-dvh relative bg-[#122c24] p-4 sm:p-8 lg:p-12 flex flex-col" data-testid="login-page">
+            <img src="/images/greenpeak-leaves.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[#102a23]/35" />
+            <div className="relative flex items-center gap-3 text-white mb-8" data-testid="login-brand">
+                <div className="w-10 h-10 rounded-lg bg-[#d9ecb9] text-forest-800 flex items-center justify-center"><Leaf className="w-6 h-6" /></div>
+                <div><div className="font-heading font-bold text-xl">GreenPeak.</div><div className="text-[10px] text-forest-100">NUTRITION ERP</div></div>
             </div>
-
-            {/* Right form */}
-            <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-white">
-                <div className="w-full max-w-sm">
-                    <div className="lg:hidden flex items-center gap-2 mb-10">
-                        <div className="w-10 h-10 rounded-md bg-forest-700 text-white flex items-center justify-center font-heading font-bold">G</div>
-                        <div className="font-heading font-bold text-slate-900">GreenPeak Nutrition ERP</div>
-                    </div>
-                    <h2 className="font-heading text-2xl font-bold text-slate-900 mb-1">Sign in to your workspace</h2>
-                    <p className="text-sm text-slate-500 mb-8">Access the enterprise ERP console</p>
+            <div className="relative flex-1 flex items-center justify-center lg:justify-end lg:pr-8">
+                <div className="w-full max-w-[460px] bg-white rounded-lg p-6 sm:p-10 shadow-xl animate-fade-in">
+                    <div className="text-xs font-bold text-forest-600 mb-3">YOUR GREENPEAK WORKSPACE</div>
+                    <h1 className="font-heading text-4xl font-bold text-[#192b25] mb-2">Welcome back.</h1>
+                    <p className="text-sm text-slate-500 mb-8">Sign in to continue.</p>
 
                     <form onSubmit={submit} className="space-y-4">
                         <div>
-                            <Label>Email</Label>
+                            <Label htmlFor="login-email">Email address</Label>
                             <Input
                                 data-testid="login-email"
+                                id="login-email"
                                 type="email" value={email} required
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoComplete="email"
                             />
                         </div>
                         <div>
-                            <Label>Password</Label>
+                            <Label htmlFor="login-password">Password</Label>
                             <Input
                                 data-testid="login-password"
+                                id="login-password"
                                 type="password" value={password} required
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="current-password"
@@ -109,13 +76,13 @@ const Login = () => {
                                 {err}
                             </div>
                         )}
-                        <Button data-testid="login-submit" type="submit" className="w-full" disabled={submitting}>
+                        <Button data-testid="login-submit" type="submit" className="w-full !py-3" disabled={submitting}>
                             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign in <ArrowRight className="w-4 h-4" /></>}
                         </Button>
                     </form>
 
                     <div className="mt-8 pt-6 border-t border-slate-100">
-                        <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-2">Demo accounts (click to fill)</div>
+                        <div className="text-xs font-bold text-slate-500 mb-3">Demo workspace</div>
                         <div className="space-y-1">
                             {DEMO.map((d) => (
                                 <button
@@ -123,16 +90,17 @@ const Login = () => {
                                     data-testid={`demo-${d.email}`}
                                     type="button"
                                     onClick={() => { setEmail(d.email); setPassword(d.pwd); }}
-                                    className="w-full text-left text-xs flex justify-between items-center px-3 py-2 rounded-md hover:bg-slate-50 transition-colors"
+                                    className="w-full text-left text-xs flex flex-wrap justify-between items-center gap-1 px-2 py-2 rounded-md hover:bg-forest-50 transition-colors"
                                 >
-                                    <span className="text-slate-700 font-mono">{d.email}</span>
-                                    <span className="text-slate-400">{d.role}</span>
+                                    <span className="text-slate-700 break-all">{d.email}</span>
+                                    <span className="text-slate-500 text-[10px]">{d.role}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
                 </div>
             </div>
+            <div className="relative text-xs text-white/80 mt-8" data-testid="login-footer">GreenPeak Nutrition · Enterprise workspace</div>
         </div>
     );
 };

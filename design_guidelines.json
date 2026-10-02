@@ -1,132 +1,86 @@
 {
-  "theme_strategy": {
-    "mode": "light",
-    "rationale": "Enterprise ERP systems for manufacturing and warehouse operations prioritize data legibility and long-session usability. Light mode with neutral grey surfaces reduces eye strain when dealing with dense tables and forms.",
-    "primary_accent": "Forest Green",
-    "vibe": "Professional, clean, functional, structured, action-oriented."
+  "theme": {
+    "concept": "ORGANIC & EARTHY",
+    "vibe": "Professional, Grounded, and Trustworthy Nutrition ERP",
+    "mode": "Light theme default (best for data clarity in ERPs)"
   },
   "typography": {
-    "headings": {
-      "font": "Chivo",
-      "weights": ["600", "700"],
-      "usage": "Use tight letter spacing (tracking-tight). Avoid Inter for headings to prevent generic 'AI slop' look.",
-      "styles": {
-        "h1": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900",
-        "h2": "text-xl sm:text-2xl font-semibold tracking-tight text-slate-800",
-        "h3": "text-lg font-medium tracking-tight text-slate-800"
-      }
-    },
-    "body": {
-      "font": "IBM Plex Sans",
-      "weights": ["400", "500", "600"],
-      "usage": "Use for all data tables, inputs, and dense UI elements.",
-      "styles": {
-        "base": "text-sm text-slate-600 leading-relaxed",
-        "small": "text-xs text-slate-500",
-        "label": "text-xs font-semibold uppercase tracking-wider text-slate-500"
-      }
-    },
-    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Chivo:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    "primary_font": "Sansation, sans-serif",
+    "instructions": "Import 'Sansation' font. Ensure it's applied globally to override the existing Chivo/IBM Plex fonts. Add to Tailwind config as the default sans font.",
+    "hierarchy": {
+      "h1": "text-4xl lg:text-5xl tracking-tight leading-none text-[#0f1f17]",
+      "h2": "text-2xl lg:text-3xl tracking-tight leading-tight text-[#0f1f17]",
+      "h3": "text-xl font-medium tracking-tight text-[#0f1f17]",
+      "body": "text-sm md:text-base leading-relaxed text-[#4b5563]",
+      "labels": "text-xs tracking-[0.2em] uppercase font-bold text-[#4b5563]"
+    }
   },
   "colors": {
     "primary": {
-      "DEFAULT": "#047857",
-      "hover": "#059669",
+      "default": "#1B4D3E",
+      "hover": "#143a2e",
       "foreground": "#ffffff"
     },
-    "background": "#f8fafc",
+    "background": "#f4f6f4",
     "surface": "#ffffff",
-    "border": "#e2e8f0",
-    "text_primary": "#0f172a",
-    "text_secondary": "#64748b",
-    "success": "#10b981",
-    "warning": "#f59e0b",
-    "danger": "#ef4444",
-    "sidebar_bg": "#ffffff",
-    "sidebar_active": "#f1f5f9",
-    "sidebar_text": "#475569"
+    "border": "#e5e7eb",
+    "text": {
+      "primary": "#0f1f17",
+      "secondary": "#4b5563"
+    },
+    "status": {
+      "success_bg": "#d1fae5",
+      "success_text": "#065f46",
+      "warning_bg": "#fef3c7",
+      "warning_text": "#92400e",
+      "danger_bg": "#fee2e2",
+      "danger_text": "#b91c1c"
+    }
   },
   "layouts": {
-    "app_shell": {
-      "structure": "Sidebar (left) + Topbar (right/top) + Main Content (bottom right).",
-      "sidebar": "Collapsible desktop-first sidebar. Width 256px expanded, 80px collapsed. Needs 14 roles so categorize links into groups (e.g., Core, Inventory, Sales).",
-      "topbar": "Sticky header with Global Search input, Notifications bell, Profile dropdown. Height 64px. Border bottom 1px solid slate-200.",
-      "main_content": "Padding p-6 or p-8. Contains breadcrumbs at the top, then page header (title + actions), then content (tables/dashboard)."
-    },
-    "dashboard_grid": {
-      "pattern": "High Density Grid (Bento Grid Mode B)",
-      "spacing": "gap-4 or gap-6",
-      "widgets": [
-        "Top row: 4 KPI Cards (col-span-1 each).",
-        "Middle row: Main Chart (col-span-3) + Quick Actions/Approvals (col-span-1).",
-        "Bottom row: Alerts/Exceptions data table (col-span-full)."
-      ]
-    },
-    "data_tables": {
-      "style": "Clean, flat borders. Avoid heavy shadows. Use border-collapse.",
-      "features": "Filters above table, sortable headers, pagination below table.",
-      "cell_padding": "py-3 px-4",
-      "row_hover": "hover:bg-slate-50 transition-colors"
-    }
+    "dashboard_grid": "High Density Grid (Mode B): Use grid-cols-1 md:grid-cols-3 lg:grid-cols-4 with gap-4 or gap-6. Keep every pixel utilized.",
+    "sidebar": "Collapsible sidebar. Use a very deep forest green (#0f1f17) for the sidebar background with white/light green text for high contrast. Active states should have a subtle dark green background (#1B4D3E).",
+    "tables": "Cardless or flat solid surface. No heavy shadow. 1px solid border (#e5e7eb). Left align tabular text, right align financial figures.",
+    "forms": "Use Shadcn components heavily customized. Flat rectangular inputs, crisp 1px borders. No native HTML inputs."
   },
-  "visual_enhancers": {
-    "borders": "1px solid border-slate-200 on all surfaces. No heavy drop shadows; use shadow-sm for cards.",
-    "radius": "rounded-md (moderate 6px) to maintain a structural, serious enterprise look.",
-    "buttons": "Flat, sharp appearance. Primary button uses Forest Green. Secondary uses outline.",
-    "micro_interactions": "Hover states on all buttons and table rows. Focus rings (focus:ring-2 focus:ring-emerald-500/50) on inputs."
-  },
-  "component_instructions": {
-    "cards": "Use Shadcn Card, but override shadow to be very minimal (shadow-sm) and add a 1px border. No oversized cards.",
-    "tables": "Use standard HTML table inside a border-rounded container for simplicity and performance in data-heavy apps. Add sticky headers.",
-    "forms": "Use Shadcn Form/Input. 2-column grid for long forms. Labels must be clearly visible above inputs.",
-    "breadcrumbs": "Essential for navigation. text-sm text-slate-500. Use lucide 'ChevronRight' separator.",
-    "status_badges": "Pill-shaped (rounded-full) with subtle backgrounds (e.g., bg-emerald-100 text-emerald-800 for Approved)."
+  "surfaces": {
+    "cards": "Flat solid surfaces with max 8px border-radius (rounded-lg). Use 1px subtle border. No muddy transparent backgrounds.",
+    "header": "Solid background (white) with hard bottom 1px border. DO NOT use transparent backgrounds over content."
   },
   "motion": {
-    "transitions": "Use targeted transitions, never 'all'. transition-colors duration-200 for hover states. Collapsible sidebar needs transition-width duration-300 ease-in-out.",
-    "loading": "Skeleton loaders for dashboard widgets and tables instead of spinners."
+    "hover_states": "-translate-y-1 with subtle shadow-md for interactive cards. Smooth scale up for buttons.",
+    "buttons": "Explicitly set hover text color. Example: hover:bg-[#143a2e] hover:text-white. No universal 'transition-all'."
   },
-  "accessibility": {
-    "contrast": "Ensure text meets WCAG AA standards. Forest Green on white is excellent. Avoid light grey text on light grey backgrounds.",
-    "focus": "All interactive elements must have visible focus rings.",
-    "testing": "All interactive and key informational elements MUST include a 'data-testid' attribute (e.g., data-testid='sidebar-toggle')."
-  },
-  "media": {
-    "icons_library": "lucide-react",
-    "charts_library": "recharts",
-    "image_urls": {
-      "product_protein": {
-        "url": "https://images.unsplash.com/photo-1693996045899-7cf0ac0229c7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxwcm90ZWluJTIwcG93ZGVyJTIwc3VwcGxlbWVudCUyMGJvdHRsZXxlbnwwfHx8fDE3OTA5NDYxODh8MA&ixlib=rb-4.1.0&q=85",
-        "description": "Protein powder bottle, use in Products CRUD list."
-      },
-      "product_vitamin": {
-        "url": "https://images.unsplash.com/photo-1633171036157-78d53387fdc0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHx2aXRhbWluJTIwcGlsbHMlMjBib3R0bGUlMjB3aGl0ZSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzkwOTQ2MTg4fDA&ixlib=rb-4.1.0&q=85",
-        "description": "Vitamin pills bottle, use in Products CRUD list."
-      },
-      "warehouse_bg": {
-        "url": "https://images.unsplash.com/photo-1684695749267-233af13276d0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHx3YXJlaG91c2UlMjBzaGVsdmVzJTIwaW52ZW50b3J5fGVufDB8fHx8MTc5MDk0NjE4OHww&ixlib=rb-4.1.0&q=85",
-        "description": "Warehouse shelves, use for warehouse location empty states or header graphics."
-      },
-      "user_profile": {
-        "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc5MDk0NjE4OHww&ixlib=rb-4.1.0&q=85",
-        "description": "Professional headshot, use for user profile icon in top navbar."
-      }
-    }
+  "component_instructions": {
+    "buttons": "Slightly rounded (rounded-md). Use primary forest green (#1B4D3E) for primary actions ONLY. Secondary buttons should be outline with forest green text.",
+    "charts": "Recharts or Shadcn charts. Use monochromatic green scales (e.g., #a7f3d0, #34d399, #1B4D3E) for revenue/advertising charts.",
+    "badges": "For batch alerts and expiry statuses: High contrast backgrounds. E.g., warning_bg for expiring soon, danger_bg for expired."
   },
   "instructions_to_main_agent": [
-    "Install custom fonts by adding the google_fonts_url to index.html and configuring tailwind.config.js with fontFamily 'Chivo' and 'IBM Plex Sans'.",
-    "Use standard HTML+Tailwind for layouts, use Shadcn for complex interactives (Dropdown Menu, Dialogs, Selects).",
-    "Build a robust layout component with a collapsible sidebar. Do not use an oversized hamburger menu on desktop.",
-    "Dashboard KPIs should follow the 'Metric -> Target -> Variance -> Exception' mental model. Use Recharts for the main revenue/inventory chart.",
-    "For the Products CRUD, use the provided product_protein and product_vitamin images for dummy data.",
-    "Apply Forest Green (bg-emerald-700) exclusively for primary CTA buttons (e.g., 'Create Order', 'Approve') to guide action."
+    "Update tailwind.config.js to include Sansation as the primary sans font.",
+    "Refactor Dashboard.jsx KPIs to use the high-density bento grid.",
+    "Refactor Layout.jsx to have a solid deep green sidebar and a clean white top header with bottom border.",
+    "Refactor Login.jsx to use the forest green nature texture image as the split screen hero.",
+    "Update all forms and tables in Master Data, Sales, Finance, etc., to use flat solid styles with 1px borders.",
+    "Do NOT add new features. Focus entirely on applying this aesthetic refresh based on these guidelines."
   ],
-  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
-    "You tend to converge toward generic, 'on distribution' outputs. Avoid generic centered layouts and excessive gradients.",
-    "NEVER use AI assistant Emoji characters (🤖🧠💡).",
-    "Every interaction needs micro-animations - hover states, focus rings.",
-    "Use generous spacing but keep tables dense enough for data entry (py-2 px-3 for cells).",
-    "Never use purely transparent backgrounds on overlays/headers.",
-    "All interactive elements MUST include data-testid attribute for automated testing."
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1524116458090-9521cd04f38d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MTJ8MHwxfHNlYXJjaHwzfHxmb3Jlc3QlMjBncmVlbiUyMGxlYXZlcyUyMG5hdHVyZSUyMHRleHR1cmV8ZW58MHx8fHwxNzkwOTUxNTc2fDA&ixlib=rb-4.1.0&q=85",
+      "category": "login_background",
+      "description": "Lush forest green leaf texture for the login page split-screen background to reinforce the GreenPeak brand."
+    }
+  ],
+  "accessibility": {
+    "contrast": "Ensure all text meets minimum 4.5:1 contrast against background.",
+    "testing": "All interactive elements MUST include a data-testid attribute in kebab-case format."
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic outputs. Create creative, distinctive frontends.",
+    "DO NOT use complete transparent background in header, overlays, or any surface that has content under it.",
+    "Do not make generic centered layouts. DO NOT add .App { text-align: center; }.",
+    "You MUST NOT apply universal transition (e.g., transition: all). Add specific transitions.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute for robust automated testing.",
+    "NEVER use AI assistant Emoji characters (🤖🧠) for icons. Use Phosphor or Lucide icons."
   ]
 }

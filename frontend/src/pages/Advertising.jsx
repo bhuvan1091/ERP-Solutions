@@ -45,45 +45,48 @@ const Advertising = () => {
     return (
         <div data-testid="advertising-page">
             <PageHeader title="Advertising"
-                description="Multi-platform campaign reporting (Meta, Google, LinkedIn, TikTok, Amazon). Metrics shown are platform-reported — ERP-attributed revenue appears separately."
+                description="Campaign performance across your marketing channels."
                 breadcrumbs={[{ label: "Marketing" }, { label: "Advertising" }]} />
 
             {/* Connected accounts */}
-            <Card className="mb-4">
-                <CardHeader title="Connected ad accounts" description="OAuth connectors (demo data). Add platform credentials in Admin → Integrations to go live." />
-                <div className="divide-y divide-slate-100">
+            <section className="mb-8">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 className="erp-section-title">Advertising accounts</h2>
+                    <span data-testid="advertising-demo-notice" className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800"><AlertTriangle className="w-3.5 h-3.5" /> Demo data · Not live</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-5 gap-3">
                     {connections.length === 0 ? <EmptyState icon={Link2} title="No ad accounts connected" /> : connections.map((c) => (
-                        <div key={c.id} className="p-3 flex items-center justify-between" data-testid={`ad-connection-${c.platform}`}>
-                            <div className="flex items-center gap-3">
-                                <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold ${platformColor[c.platform] || "bg-slate-100"}`}>{c.platform}</span>
-                                <div>
-                                    <div className="text-sm font-medium text-slate-900">{c.account_name}</div>
-                                    <div className="text-[10px] text-slate-500 font-mono">{c.account_id}</div>
+                        <Card key={c.id} className="p-4" data-testid={`ad-connection-${c.platform}`}>
+                            <div className="flex items-start gap-3 mb-4">
+                                <span className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-base font-bold ${platformColor[c.platform] || "bg-slate-100"}`}>{({META: "m", GOOGLE_ADS: "G", LINKEDIN: "in", TIKTOK: "t", AMAZON: "a"})[c.platform] || c.platform[0]}</span>
+                                <div className="min-w-0">
+                                    <div className="text-sm font-bold text-slate-900 break-words">{c.account_name}</div>
+                                    <div className="text-[10px] text-slate-500 break-all mt-1">{c.account_id}</div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="text-right">
+                            <div className="border-t border-slate-100 pt-3">
+                                <div>
                                     <StatusBadge status={c.status} />
                                     <div className="text-[10px] text-slate-400 mt-0.5">Last synced {fmtDateTime(c.last_sync_at)}</div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
-            </Card>
+            </section>
 
             {/* Platform summary */}
             {summary && (
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-5 gap-4 mb-8">
                     {(summary.platforms || []).map((p) => (
                         <Card key={p.platform} className="p-4" data-testid={`platform-summary-${p.platform}`}>
-                            <div className="flex items-center justify-between mb-2">
+                            <div className="flex flex-wrap gap-2 items-center justify-between mb-4">
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${platformColor[p.platform] || "bg-slate-100"}`}>{p.platform}</span>
                                 <span className="text-[10px] text-slate-500">{p.campaigns} campaigns</span>
                             </div>
                             <div className="text-xs text-slate-500">Spend</div>
-                            <div className="font-heading font-bold text-lg tabular-nums text-slate-900">{fmtCurrency(p.spend)}</div>
-                            <div className="mt-2 flex justify-between text-[11px]">
+                            <div className="font-heading font-bold text-2xl tabular-nums text-slate-900">{fmtCurrency(p.spend)}</div>
+                            <div className="mt-3 flex flex-wrap gap-2 justify-between text-[11px]">
                                 <span className="text-slate-500">ROAS <strong className={p.roas >= 3 ? "text-emerald-700" : "text-slate-700"}>{p.roas}x</strong></span>
                                 <span className="text-slate-500">Rev {fmtCurrency(p.revenue)}</span>
                             </div>
@@ -94,7 +97,7 @@ const Advertising = () => {
 
             <Card className="mb-4"><div className="p-4 flex gap-3 items-end">
                 <div className="w-56"><Label>Platform</Label>
-                    <Select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+                    <Select data-testid="advertising-platform-filter" aria-label="Filter by platform" value={platform} onChange={(e) => setPlatform(e.target.value)}>
                         <option value="">All</option>
                         <option value="META">Meta (Facebook / Instagram)</option>
                         <option value="GOOGLE_ADS">Google Ads</option>
@@ -110,16 +113,14 @@ const Advertising = () => {
                     empty={<EmptyState icon={Megaphone} title="No campaigns" />} />
             </Card>
 
-            <Card className="mt-4 p-4">
+            <div className="mt-5 py-3 border-t border-slate-200" data-testid="advertising-data-note">
                 <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <div className="text-xs text-slate-600 leading-relaxed">
-                        <strong className="text-slate-900">Note on data methodology:</strong> Platform numbers (impressions, clicks, CPC, platform-reported ROAS) come directly from the ad platform APIs.
-                        ERP-attributed revenue is calculated from sales orders tagged with a <code className="font-mono bg-slate-100 px-1 rounded">campaign_id</code> or matching UTM parameters.
-                        Contribution margin requires product cost + ad spend and may differ from platform ROAS.
+                        <strong className="text-slate-900">Demo campaign metrics.</strong> Advertising accounts and platform performance are sample data, not live API results. ERP-attributed revenue reflects tagged sales orders.
                     </div>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 };

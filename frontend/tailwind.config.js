@@ -6,8 +6,9 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                heading: ['Chivo', 'ui-sans-serif', 'system-ui'],
-                sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                heading: ['Sansation', 'sans-serif'],
+                sans: ['Sansation', 'sans-serif'],
+                mono: ['Sansation', 'sans-serif'],
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -28,9 +29,9 @@ module.exports = {
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',
                 forest: {
-                    50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0',
-                    300: '#6ee7b7', 400: '#34d399', 500: '#10b981',
-                    600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                    50: '#eef5f0', 100: '#dcebe1', 200: '#bbd6c5',
+                    300: '#94b9a3', 400: '#68987e', 500: '#417b5e',
+                    600: '#2e664d', 700: '#1b4d3e', 800: '#143a2e', 900: '#102a23',
                 },
                 chart: {
                     '1': 'hsl(var(--chart-1))', '2': 'hsl(var(--chart-2))',

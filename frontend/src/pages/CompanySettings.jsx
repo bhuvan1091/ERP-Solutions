@@ -42,25 +42,25 @@ const CompanySettings = () => {
                 actions={<Button data-testid="save-settings" onClick={() => save.mutate()} disabled={save.isPending}><Save className="w-4 h-4" /> {save.isPending ? "Saving..." : (saved ? "Saved ✓" : "Save changes")}</Button>}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5">
                 {/* Logo & branding */}
                 <Card>
                     <CardHeader title="Logo & branding" description="Shown at the top-left of every invoice PDF" />
                     <div className="p-4 space-y-4">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
                             {form.logo_base64 ? (
                                 <img src={form.logo_base64} alt="Company logo" className="w-24 h-24 object-contain rounded-md border border-slate-200 bg-white p-2" data-testid="logo-preview" />
                             ) : (
                                 <div className="w-24 h-24 rounded-md border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400"><ImageIcon className="w-8 h-8" /></div>
                             )}
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-[140px]">
                                 <input ref={fileRef} data-testid="logo-upload" type="file" accept="image/png,image/jpeg,image/webp" onChange={onFile} className="hidden" />
-                                <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Upload className="w-3.5 h-3.5" /> Upload logo</Button>
+                                <Button data-testid="upload-logo-button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}><Upload className="w-3.5 h-3.5" /> Upload logo</Button>
                                 {form.logo_base64 && (
-                                    <Button variant="ghost" size="sm" className="ml-2 text-rose-600" onClick={() => upd("logo_base64", null)}><Trash2 className="w-3.5 h-3.5" /> Remove</Button>
+                                    <Button data-testid="remove-logo-button" variant="ghost" size="sm" className="text-rose-600" onClick={() => upd("logo_base64", null)}><Trash2 className="w-3.5 h-3.5" /> Remove</Button>
                                 )}
                                 <p className="text-[11px] text-slate-500 mt-2">PNG / JPG / WebP • Max 500 KB • Square recommended</p>
-                                {logoErr && <p className="text-xs text-rose-700 mt-1">{logoErr}</p>}
+                                {logoErr && <p data-testid="logo-error" role="alert" className="text-xs text-rose-700 mt-1">{logoErr}</p>}
                             </div>
                         </div>
                         <div><Label>Company name</Label><Input value={form.name || ""} onChange={(e) => upd("name", e.target.value)} /></div>
@@ -106,7 +106,7 @@ const CompanySettings = () => {
                     </div>
                 </Card>
             </div>
-            {save.isError && <div className="mt-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-md px-3 py-2">{save.error?.response?.data?.detail || "Could not save"}</div>}
+            {save.isError && <div data-testid="settings-save-error" role="alert" className="mt-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-md px-3 py-2">{save.error?.response?.data?.detail || "Could not save"}</div>}
         </div>
     );
 };
