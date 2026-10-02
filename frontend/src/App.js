@@ -15,6 +15,10 @@ import SalesOrders from "./pages/SalesOrders";
 import Advertising from "./pages/Advertising";
 import UsersPage from "./pages/Users";
 import Audit from "./pages/Audit";
+import Invoices from "./pages/Invoices";
+import Payments from "./pages/Payments";
+import JournalEntries from "./pages/JournalEntries";
+import FinanceReports from "./pages/FinanceReports";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -51,6 +55,10 @@ const App = () => (
                     <Route path="/purchase-orders" element={<Protected><PurchaseOrders /></Protected>} />
                     <Route path="/sales-orders" element={<Protected><SalesOrders /></Protected>} />
                     <Route path="/advertising" element={<Protected><Advertising /></Protected>} />
+                    <Route path="/invoices" element={<Protected><Invoices /></Protected>} />
+                    <Route path="/payments" element={<Protected><Payments /></Protected>} />
+                    <Route path="/journal" element={<Protected><JournalEntries /></Protected>} />
+                    <Route path="/finance-reports" element={<Protected><FinanceReports /></Protected>} />
                     <Route path="/users" element={<Protected><UsersPage /></Protected>} />
                     <Route path="/audit" element={<Protected><Audit /></Protected>} />
                     <Route path="*" element={<Navigate to="/" replace />} />

@@ -44,6 +44,10 @@ const SalesOrders = () => {
     const allocate = useMutation({ mutationFn: (id) => endpoints.sales.allocate(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["sos"] }) });
     const dispatch = useMutation({ mutationFn: (id) => endpoints.sales.dispatch(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ["sos"] }); qc.invalidateQueries({ queryKey: ["batches"] }); } });
     const cancel = useMutation({ mutationFn: (id) => endpoints.sales.cancel(id), onSuccess: () => qc.invalidateQueries({ queryKey: ["sos"] }) });
+    const invoice = useMutation({
+        mutationFn: (id) => endpoints.finance.invoiceFromSO({ sales_order_id: id }),
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ["sos"] }); qc.invalidateQueries({ queryKey: ["invoices"] }); },
+    });
 
     const addLine = () => setForm({ ...form, lines: [...form.lines, { product_id: "", quantity: 1, unit_price: 0, tax_rate: 18, discount: 0 }] });
     const removeLine = (i) => setForm({ ...form, lines: form.lines.filter((_, idx) => idx !== i) });
@@ -77,6 +81,12 @@ const SalesOrders = () => {
                     )}
                     {r.status === "ALLOCATED" && hasPermission("sales:dispatch") && (
                         <button data-testid={`dispatch-so-${r.id}`} className="text-xs text-forest-700 hover:underline" onClick={() => dispatch.mutate(r.id)}>Dispatch</button>
+                    )}
+                    {r.status === "DISPATCHED" && hasPermission("finance:write") && (
+                        <button data-testid={`invoice-so-${r.id}`} className="text-xs text-forest-700 hover:underline" onClick={() => invoice.mutate(r.id)}>Generate invoice</button>
+                    )}
+                    {r.status === "INVOICED" && (
+                        <span className="text-xs text-emerald-700">✓ Invoiced</span>
                     )}
                 </div>
             )

@@ -5,7 +5,7 @@ import {
     ShoppingCart, ClipboardList, Megaphone, Shield, Settings,
     LogOut, Search, Bell, ChevronDown, ChevronRight, ChevronLeft,
     Menu, PanelLeftClose, Factory, FlaskConical, Wallet, BarChart3,
-    Boxes, Receipt, FileText,
+    Boxes, Receipt, FileText, BookOpen,
 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
@@ -36,6 +36,15 @@ const NAV = [
         items: [
             { to: "/purchase-orders", label: "Purchase Orders", icon: ShoppingCart, perm: "purchase:read" },
             { to: "/sales-orders", label: "Sales Orders", icon: ClipboardList, perm: "sales:read" },
+        ],
+    },
+    {
+        group: "Finance",
+        items: [
+            { to: "/invoices", label: "Invoices", icon: Receipt, perm: "finance:read" },
+            { to: "/payments", label: "Payments", icon: Wallet, perm: "finance:read" },
+            { to: "/journal", label: "Journal Entries", icon: BookOpen, perm: "finance:read" },
+            { to: "/finance-reports", label: "Finance Reports", icon: BarChart3, perm: "finance:read" },
         ],
     },
     {

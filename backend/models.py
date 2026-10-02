@@ -452,3 +452,173 @@ class ApprovalRequest(Base):
     resolved_by = Column(String(36), ForeignKey("users.id"))
     resolved_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+
+# ======= FINANCE / ACCOUNTING =======
+class AccountType(str, enum.Enum):
+    ASSET = "ASSET"
+    LIABILITY = "LIABILITY"
+    EQUITY = "EQUITY"
+    INCOME = "INCOME"
+    EXPENSE = "EXPENSE"
+
+
+class InvoiceType(str, enum.Enum):
+    CUSTOMER = "CUSTOMER"   # AR - we sell to a customer
+    SUPPLIER = "SUPPLIER"   # AP - supplier bills us
+
+
+class InvoiceStatus(str, enum.Enum):
+    DRAFT = "DRAFT"
+    POSTED = "POSTED"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    PAID = "PAID"
+    CANCELLED = "CANCELLED"
+
+
+class PaymentDirection(str, enum.Enum):
+    RECEIPT = "RECEIPT"      # Money IN from customer
+    PAYMENT = "PAYMENT"      # Money OUT to supplier
+
+
+class PaymentMethod(str, enum.Enum):
+    CASH = "CASH"
+    BANK = "BANK"
+    UPI = "UPI"
+    CHEQUE = "CHEQUE"
+    CARD = "CARD"
+
+
+class Account(Base):
+    """Chart of accounts (single-currency Phase 1)."""
+    __tablename__ = "accounts"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    code = Column(String(16), unique=True, nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    account_type = Column(Enum(AccountType), nullable=False)
+    parent_id = Column(String(36), ForeignKey("accounts.id"))
+    description = Column(Text)
+    is_system = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+
+class JournalEntry(Base):
+    """Posted journal entry. Must be balanced (sum debits == sum credits)."""
+    __tablename__ = "journal_entries"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    entry_number = Column(String(32), unique=True, nullable=False, index=True)
+    entry_date = Column(Date, nullable=False, default=lambda: datetime.now(timezone.utc).date())
+    narration = Column(Text)
+    reference_type = Column(String(32))    # INVOICE, PAYMENT, MANUAL, GRN, SO
+    reference_id = Column(String(36))
+    reference_number = Column(String(64))
+    is_reversed = Column(Boolean, default=False)
+    reversed_by_entry_id = Column(String(36), ForeignKey("journal_entries.id"))
+    posted_by = Column(String(36), ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), default=utcnow, index=True)
+
+    lines = relationship("JournalEntryLine", back_populates="entry", cascade="all, delete-orphan")
+
+
+class JournalEntryLine(Base):
+    __tablename__ = "journal_entry_lines"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    entry_id = Column(String(36), ForeignKey("journal_entries.id", ondelete="CASCADE"), nullable=False)
+    account_id = Column(String(36), ForeignKey("accounts.id"), nullable=False)
+    debit = Column(Numeric(14, 2), default=0, nullable=False)
+    credit = Column(Numeric(14, 2), default=0, nullable=False)
+    notes = Column(String(255))
+    counterparty_type = Column(String(32))     # CUSTOMER, SUPPLIER (for sub-ledger)
+    counterparty_id = Column(String(36))
+
+    entry = relationship("JournalEntry", back_populates="lines")
+    account = relationship("Account")
+
+
+class Invoice(Base):
+    """Customer invoice (AR) or Supplier bill (AP)."""
+    __tablename__ = "invoices"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    invoice_number = Column(String(32), unique=True, nullable=False, index=True)
+    invoice_type = Column(Enum(InvoiceType), nullable=False)
+    status = Column(Enum(InvoiceStatus), nullable=False, default=InvoiceStatus.DRAFT)
+
+    # One of these is set
+    customer_id = Column(String(36), ForeignKey("customers.id"))
+    supplier_id = Column(String(36), ForeignKey("suppliers.id"))
+
+    # Source documents
+    sales_order_id = Column(String(36), ForeignKey("sales_orders.id"))
+    purchase_order_id = Column(String(36), ForeignKey("purchase_orders.id"))
+    goods_receipt_id = Column(String(36), ForeignKey("goods_receipts.id"))
+    supplier_bill_reference = Column(String(64))  # supplier's own invoice number for AP
+
+    invoice_date = Column(Date, default=lambda: datetime.now(timezone.utc).date())
+    due_date = Column(Date)
+
+    subtotal = Column(Numeric(14, 2), default=0)
+    tax_amount = Column(Numeric(14, 2), default=0)
+    discount_amount = Column(Numeric(14, 2), default=0)
+    total = Column(Numeric(14, 2), default=0)
+    amount_paid = Column(Numeric(14, 2), default=0)
+
+    cogs_amount = Column(Numeric(14, 2), default=0)   # COGS for customer invoices
+    notes = Column(Text)
+
+    journal_entry_id = Column(String(36), ForeignKey("journal_entries.id"))
+    created_by = Column(String(36), ForeignKey("users.id"))
+    posted_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+    updated_at = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    customer = relationship("Customer")
+    supplier = relationship("Supplier")
+    sales_order = relationship("SalesOrder")
+    purchase_order = relationship("PurchaseOrder")
+    goods_receipt = relationship("GoodsReceipt")
+    lines = relationship("InvoiceLine", back_populates="invoice", cascade="all, delete-orphan")
+
+
+class InvoiceLine(Base):
+    __tablename__ = "invoice_lines"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    invoice_id = Column(String(36), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(String(36), ForeignKey("products.id"))
+    description = Column(String(255))
+    quantity = Column(Numeric(14, 3), nullable=False, default=1)
+    unit_price = Column(Numeric(14, 4), nullable=False, default=0)
+    tax_rate = Column(Numeric(5, 2), default=18)
+    discount = Column(Numeric(14, 2), default=0)
+    line_total = Column(Numeric(14, 2), default=0)
+
+    invoice = relationship("Invoice", back_populates="lines")
+    product = relationship("Product")
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    id = Column(String(36), primary_key=True, default=new_uuid)
+    payment_number = Column(String(32), unique=True, nullable=False, index=True)
+    direction = Column(Enum(PaymentDirection), nullable=False)
+    payment_date = Column(Date, default=lambda: datetime.now(timezone.utc).date())
+
+    customer_id = Column(String(36), ForeignKey("customers.id"))
+    supplier_id = Column(String(36), ForeignKey("suppliers.id"))
+    invoice_id = Column(String(36), ForeignKey("invoices.id"))
+
+    amount = Column(Numeric(14, 2), nullable=False)
+    method = Column(Enum(PaymentMethod), nullable=False, default=PaymentMethod.BANK)
+    bank_account_id = Column(String(36), ForeignKey("accounts.id"))  # Cash/Bank account
+    reference = Column(String(128))   # UTR / cheque # / UPI txn id
+    notes = Column(Text)
+
+    journal_entry_id = Column(String(36), ForeignKey("journal_entries.id"))
+    created_by = Column(String(36), ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), default=utcnow)
+
+    customer = relationship("Customer")
+    supplier = relationship("Supplier")
+    invoice = relationship("Invoice")
+    bank_account = relationship("Account")

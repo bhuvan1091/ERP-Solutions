@@ -9,6 +9,7 @@ import { useAuth } from "../lib/auth";
 const PurchaseOrders = () => {
     const qc = useQueryClient();
     const { hasPermission } = useAuth();
+    const [tab, setTab] = useState("POS");
     const [status, setStatus] = useState("");
     const [open, setOpen] = useState(false);
     const [grnOpen, setGrnOpen] = useState(false);
@@ -20,6 +21,15 @@ const PurchaseOrders = () => {
     const { data: rows = [], isLoading } = useQuery({
         queryKey: ["pos", status],
         queryFn: async () => (await endpoints.purchase.list({ status: status || undefined })).data,
+    });
+    const { data: grns = [], isLoading: grnLoading } = useQuery({
+        queryKey: ["grns"],
+        queryFn: async () => (await endpoints.purchase.grns()).data,
+        enabled: tab === "GRNS",
+    });
+    const billFromGrn = useMutation({
+        mutationFn: (grn_id) => endpoints.finance.invoiceFromGRN({ goods_receipt_id: grn_id }),
+        onSuccess: () => { qc.invalidateQueries({ queryKey: ["grns"] }); qc.invalidateQueries({ queryKey: ["invoices"] }); },
     });
     const { data: suppliers = [] } = useQuery({ queryKey: ["suppliers-list"], queryFn: async () => (await endpoints.suppliers.list({ is_approved: true })).data });
     const { data: warehouses = [] } = useQuery({ queryKey: ["warehouses"], queryFn: async () => (await endpoints.warehouses.list()).data });
@@ -135,6 +145,13 @@ const PurchaseOrders = () => {
                 breadcrumbs={[{ label: "Operations" }, { label: "Purchase orders" }]}
                 actions={hasPermission("purchase:write") && <Button data-testid="new-po-btn" onClick={() => setOpen(true)}><Plus className="w-4 h-4" /> New PO</Button>} />
 
+            <div className="flex items-center gap-2 mb-4 border-b border-slate-200">
+                <button data-testid="tab-POS" onClick={() => setTab("POS")} className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 ${tab === "POS" ? "border-forest-700 text-forest-700" : "border-transparent text-slate-500 hover:text-slate-900"}`}>Purchase Orders</button>
+                <button data-testid="tab-GRNS" onClick={() => setTab("GRNS")} className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 ${tab === "GRNS" ? "border-forest-700 text-forest-700" : "border-transparent text-slate-500 hover:text-slate-900"}`}>Goods Receipts</button>
+            </div>
+
+            {tab === "POS" ? (
+            <>
             <Card className="mb-4">
                 <div className="p-4 flex gap-3 items-end">
                     <div className="w-56"><Label>Status</Label>
@@ -152,6 +169,26 @@ const PurchaseOrders = () => {
             <Card>
                 <DataTable testId="pos-table" columns={columns} rows={rows} loading={isLoading} empty={<EmptyState icon={ShoppingCart} title="No purchase orders yet" />} />
             </Card>
+            </>
+            ) : (
+            <Card>
+                <DataTable testId="grns-table"
+                    columns={[
+                        { key: "grn_number", label: "GRN#", render: (r) => <span className="font-mono text-xs text-slate-900">{r.grn_number}</span> },
+                        { key: "po", label: "Against PO", render: (r) => <span className="font-mono text-xs">{r.po_number}</span> },
+                        { key: "supplier", label: "Supplier", render: (r) => <span className="text-xs font-medium">{r.supplier_name}</span> },
+                        { key: "date", label: "Received", render: (r) => <span className="text-xs">{fmtDate(r.received_date)}</span> },
+                        { key: "lines", label: "Lines", render: (r) => <span className="text-xs tabular-nums">{r.line_count}</span> },
+                        { key: "actions", label: "", render: (r) => hasPermission("finance:write") && (
+                            <button data-testid={`bill-grn-${r.id}`} className="text-xs text-forest-700 hover:underline"
+                                onClick={() => billFromGrn.mutate(r.id)}>Create supplier bill</button>
+                        ) },
+                    ]}
+                    rows={grns} loading={grnLoading}
+                    empty={<EmptyState icon={PackageCheck} title="No goods receipts yet" description="Receive items against an approved PO to create a GRN." />} />
+                {billFromGrn.isError && <div className="p-3 text-xs text-rose-700">{billFromGrn.error?.response?.data?.detail}</div>}
+            </Card>
+            )}
 
             {/* Create PO modal */}
             <Modal open={open} onClose={() => setOpen(false)} title="New purchase order" size="xl">
