@@ -107,6 +107,11 @@ export const endpoints = {
         arAging: (params) => api.get("/finance/reports/ar-aging", { params }),
         apAging: (params) => api.get("/finance/reports/ap-aging", { params }),
         profitLoss: (params) => api.get("/finance/reports/profit-loss", { params }),
+        emailInvoice: (id) => api.post(`/finance/invoices/${id}/email`),
+    },
+    company: {
+        get: () => api.get("/company"),
+        update: (data) => api.patch("/company", data),
     },
     audit: (params) => api.get("/audit-logs", { params }),
     users: {

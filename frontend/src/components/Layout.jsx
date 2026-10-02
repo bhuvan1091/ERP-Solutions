@@ -56,6 +56,7 @@ const NAV = [
     {
         group: "Admin",
         items: [
+            { to: "/settings", label: "Company Settings", icon: Settings, perm: "admin:write" },
             { to: "/users", label: "Users & Roles", icon: Shield, perm: "admin:read" },
             { to: "/audit", label: "Audit Log", icon: FileText, perm: "audit:read" },
         ],

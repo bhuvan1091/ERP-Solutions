@@ -19,6 +19,7 @@ import Invoices from "./pages/Invoices";
 import Payments from "./pages/Payments";
 import JournalEntries from "./pages/JournalEntries";
 import FinanceReports from "./pages/FinanceReports";
+import CompanySettings from "./pages/CompanySettings";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -59,6 +60,7 @@ const App = () => (
                     <Route path="/payments" element={<Protected><Payments /></Protected>} />
                     <Route path="/journal" element={<Protected><JournalEntries /></Protected>} />
                     <Route path="/finance-reports" element={<Protected><FinanceReports /></Protected>} />
+                    <Route path="/settings" element={<Protected><CompanySettings /></Protected>} />
                     <Route path="/users" element={<Protected><UsersPage /></Protected>} />
                     <Route path="/audit" element={<Protected><Audit /></Protected>} />
                     <Route path="*" element={<Navigate to="/" replace />} />

@@ -25,6 +25,7 @@ from routers.sales_router import router as so_router
 from routers.advertising_router import router as ads_router
 from routers.dashboard_router import router as dash_router, audit_router
 from routers.finance_router import router as finance_router
+from routers.company_router import router as company_router
 
 
 logging.basicConfig(level=logging.INFO,
@@ -63,6 +64,7 @@ app.include_router(ads_router)
 app.include_router(dash_router)
 app.include_router(audit_router)
 app.include_router(finance_router)
+app.include_router(company_router)
 
 
 @app.get("/api")

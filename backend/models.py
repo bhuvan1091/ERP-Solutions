@@ -94,6 +94,15 @@ class Company(Base):
     timezone = Column(String(64), default="Asia/Kolkata")
     fiscal_year_start_month = Column(Integer, default=4)
     logo_url = Column(String(500))
+    logo_base64 = Column(Text)              # Data URL for inline logo
+    bank_name = Column(String(128))
+    bank_account_name = Column(String(128))
+    bank_account_number = Column(String(64))
+    bank_ifsc = Column(String(32))
+    bank_branch = Column(String(128))
+    upi_id = Column(String(64))
+    invoice_notes = Column(Text)            # default footer notes on every invoice
+    finance_email = Column(String(255))     # BCC on invoice emails
     created_at = Column(DateTime(timezone=True), default=utcnow)
 
 

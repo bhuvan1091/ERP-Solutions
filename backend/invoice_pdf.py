@@ -13,9 +13,12 @@ from reportlab.lib.units import mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether,
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, Image,
 )
+from reportlab.lib.utils import ImageReader
 from num2words import num2words
+import base64
+from io import BytesIO as _BIO
 
 
 FOREST = colors.HexColor("#047857")
@@ -97,18 +100,45 @@ def generate_invoice_pdf(invoice, company) -> bytes:
 
     # ---- HEADER ----
     doc_label = "TAX INVOICE" if is_customer else "PURCHASE BILL"
-    header_left = [
+
+    # Logo (data URL -> ReportLab Image). Any decode/render error silently skips the logo.
+    logo_flow = None
+    if getattr(company, "logo_base64", None):
+        try:
+            s = company.logo_base64
+            if "," in s:
+                s = s.split(",", 1)[1]
+            img_bytes = base64.b64decode(s)
+            # Validate via PIL before handing to ReportLab
+            from PIL import Image as _PILImage
+            with _PILImage.open(_BIO(img_bytes)) as im:
+                im.verify()
+            logo_flow = Image(_BIO(img_bytes), width=28 * mm, height=28 * mm, kind="proportional")
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Could not render company logo: %s", e)
+            logo_flow = None
+
+    company_block = [
         Paragraph(f"<font size=14><b>{company.name}</b></font>", val),
         Paragraph(company.address or "", small),
         Paragraph(f"GSTIN: <b>{company.gstin or '—'}</b>", small),
         Paragraph(f"FSSAI: <b>{company.fssai_license or '—'}</b>", small),
     ]
+    if logo_flow:
+        header_left_tbl = Table([[logo_flow, company_block]], colWidths=[30 * mm, 68 * mm])
+    else:
+        header_left_tbl = Table([[company_block]], colWidths=[98 * mm])
+    header_left_tbl.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+    ]))
     header_right = [
         Paragraph(doc_label, title_style),
         Spacer(1, 2),
         Paragraph(f"<b>{invoice.invoice_number}</b>", ParagraphStyle("inv", parent=val, alignment=TA_RIGHT, fontSize=11)),
     ]
-    header = Table([[header_left, header_right]], colWidths=[100 * mm, 80 * mm])
+    header = Table([[header_left_tbl, header_right]], colWidths=[100 * mm, 80 * mm])
     header.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
@@ -285,13 +315,41 @@ def generate_invoice_pdf(invoice, company) -> bytes:
         flow.append(Paragraph(invoice.notes, small))
         flow.append(Spacer(1, 10))
 
+    # Bank details block for customer invoices with bank_account_number set
+    bank_block = []
+    if is_customer and getattr(company, "bank_account_number", None):
+        bank_rows = [[Paragraph("BANK DETAILS", section_h), ""]]
+        if company.bank_account_name:
+            bank_rows.append([Paragraph("Account name", small), Paragraph(f"<b>{company.bank_account_name}</b>", small)])
+        if company.bank_name:
+            bank_rows.append([Paragraph("Bank", small), Paragraph(company.bank_name, small)])
+        if company.bank_account_number:
+            bank_rows.append([Paragraph("A/C number", small), Paragraph(f"<b>{company.bank_account_number}</b>", small)])
+        if company.bank_ifsc:
+            bank_rows.append([Paragraph("IFSC", small), Paragraph(f"<b>{company.bank_ifsc}</b>", small)])
+        if company.bank_branch:
+            bank_rows.append([Paragraph("Branch", small), Paragraph(company.bank_branch, small)])
+        if company.upi_id:
+            bank_rows.append([Paragraph("UPI", small), Paragraph(f"<b>{company.upi_id}</b>", small)])
+        bank_tbl = Table(bank_rows, colWidths=[24 * mm, 60 * mm])
+        bank_tbl.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ("SPAN", (0, 0), (1, 0)),
+            ("BACKGROUND", (0, 1), (-1, -1), SLATE_100),
+            ("BOX", (0, 1), (-1, -1), 0.3, SLATE_200),
+            ("LEFTPADDING", (0, 1), (-1, -1), 6),
+            ("RIGHTPADDING", (0, 1), (-1, -1), 6),
+        ]))
+        bank_block = [bank_tbl]
+
     footer_rows = [[
         [
             Paragraph("TERMS & CONDITIONS", section_h),
-            Paragraph("1. Payment due within the stated due date.", small),
-            Paragraph("2. Goods once sold are not returnable except as per our returns policy.", small),
-            Paragraph("3. Please quote invoice number on all remittances.", small),
-            Paragraph("4. Subject to local jurisdiction.", small),
+            Paragraph(getattr(company, "invoice_notes", None) or "1. Payment due within the stated due date.<br/>2. Goods once sold are not returnable except as per our returns policy.<br/>3. Please quote invoice number on all remittances.<br/>4. Subject to local jurisdiction.", small),
+            Spacer(1, 8),
+            *bank_block,
         ],
         [
             Paragraph("FOR " + (company.name or "").upper(), section_h),

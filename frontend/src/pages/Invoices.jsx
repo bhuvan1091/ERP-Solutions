@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Receipt, FilePlus2, Wallet, Ban, FileDown, Eye, Printer } from "lucide-react";
+import { Receipt, FilePlus2, Wallet, Ban, FileDown, Eye, Printer, Mail, CheckCircle2 } from "lucide-react";
 import { PageHeader, Card, CardHeader, DataTable, StatusBadge, EmptyState, Select, Label, Button, Modal, Input, Textarea } from "../components/UI";
 import { endpoints, API } from "../lib/api";
 import { fmtCurrency, fmtDate, fmtDateTime, fmtNumber } from "../lib/format";
@@ -42,6 +42,13 @@ const Invoices = () => {
             setPayOpen(false);
             setPayForm({ amount: "", method: "BANK", reference: "", payment_date: new Date().toISOString().slice(0, 10) });
         },
+    });
+
+    const [emailStatus, setEmailStatus] = useState(null);
+    const emailInvoice = useMutation({
+        mutationFn: (id) => endpoints.finance.emailInvoice(id),
+        onSuccess: (resp) => { setEmailStatus({ ok: true, msg: `Sent to ${resp.data.to}` }); setTimeout(() => setEmailStatus(null), 4000); },
+        onError: (err) => { setEmailStatus({ ok: false, msg: err?.response?.data?.detail || "Email failed" }); setTimeout(() => setEmailStatus(null), 6000); },
     });
 
     const openDetail = async (id) => {
@@ -175,13 +182,18 @@ const Invoices = () => {
                                 <strong className="text-slate-900">Journal entry:</strong> {detail.journal_entry_id ? <span className="font-mono text-slate-600">{detail.journal_entry_id.slice(0, 8)}...</span> : "—"}
                                 {detail.cogs_amount > 0 && <> • <strong>COGS:</strong> <span className="tabular-nums">{fmtCurrency(detail.cogs_amount)}</span></>}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                                 <Button data-testid="inv-detail-preview-pdf" size="sm" variant="outline" onClick={() => downloadPdf(detail, "preview")}>
                                     <Printer className="w-3.5 h-3.5" /> Preview PDF
                                 </Button>
                                 <Button data-testid="inv-detail-download-pdf" size="sm" variant="outline" onClick={() => downloadPdf(detail, "download")}>
                                     <FileDown className="w-3.5 h-3.5" /> Download
                                 </Button>
+                                {detail.invoice_type === "CUSTOMER" && detail.status !== "CANCELLED" && hasPermission("finance:write") && (
+                                    <Button data-testid="email-invoice-btn" size="sm" variant="outline" onClick={() => emailInvoice.mutate(detail.id)} disabled={emailInvoice.isPending}>
+                                        <Mail className="w-3.5 h-3.5" /> {emailInvoice.isPending ? "Sending..." : "Send to customer"}
+                                    </Button>
+                                )}
                                 {detail.status !== "CANCELLED" && detail.status !== "PAID" && hasPermission("finance:write") && (
                                     <Button data-testid="record-payment-btn" size="sm" onClick={() => { setPayForm({ ...payForm, amount: detail.amount_due }); setPayOpen(true); }}>
                                         <Wallet className="w-3.5 h-3.5" /> Record {detail.invoice_type === "CUSTOMER" ? "receipt" : "payment"}
@@ -194,6 +206,12 @@ const Invoices = () => {
                                 )}
                             </div>
                         </div>
+                        {emailStatus && (
+                            <div data-testid="email-status" className={`text-xs px-3 py-2 rounded-md border ${emailStatus.ok ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"}`}>
+                                {emailStatus.ok ? <CheckCircle2 className="inline w-3.5 h-3.5 mr-1" /> : null}
+                                {emailStatus.msg}
+                            </div>
+                        )}
                     </div>
                 )}
             </Modal>

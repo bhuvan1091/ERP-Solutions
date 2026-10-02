@@ -180,3 +180,37 @@ Requires `finance:read`. Returns 404 for missing invoice, 403 for unauthorised u
 ### Verified
 - Backend: Admin (200), sales rep (403), missing invoice (404), supplier bill (200, 1-page valid PDF).
 - Frontend: Modal captured showing 4 action buttons; row-level icon buttons rendered on every invoice.
+
+---
+
+## Phase 2.2 — Email Invoices + Company Branding (Oct 2026)
+
+### Shipped
+- **Email invoice**: `POST /api/finance/invoices/{id}/email` sends the generated PDF to the customer's email via Emergent-managed Resend. Server-side templates only (G4). Credentials-ask guardrail enforced via `_assert_safe_email`. Attachments supported (verified against `delivered@resend.dev`).
+- **Company branding**: new `/api/company` GET/PATCH endpoint. Admin can upload a PNG/JPG/WebP logo (≤500 KB, stored as base64 data URL), set bank name / account name / account # / IFSC / branch / UPI id, finance reply-to email, default invoice terms. All of these flow into every PDF automatically.
+- **New Settings page** (`/settings`, admin-only) with 3-card layout: Logo & branding, Bank details, Email & defaults.
+- **Invoice detail modal**: added `Send to customer` button (customer invoices only, requires `finance:write`). Shows green success toast with recipient on send, red toast with API error message on failure.
+- **PDF generator** (`invoice_pdf.py`) updated: renders company logo top-left, bank details block in footer for customer invoices, uses `invoice_notes` as configurable Terms & Conditions. Invalid logo images never break generation (verified via PIL, logged + skipped).
+
+### Guardrails enforced
+- G1 From-name is always `GreenPeak Nutrition` (the app's own brand).
+- G2 Attachment-safe template: no `<form>`/`<input>`, no credential-ask phrases.
+- G3 Only `https://` + `mailto:` links; anchor-text domain match.
+- G4 Recipient and HTML are both server-side (customer looked up by invoice id, body is a fixed template).
+- G5 One recipient per API call. Transactional only.
+
+### Verified
+- `delivered@resend.dev` + attachment → 200, email id returned.
+- Fake-domain recipient → 502 with clear error (`Failed to send email: Client error '422 unknown'`).
+- Supplier bills → 400 (only customer invoices are emailable).
+- Cancelled invoices → 400 (cannot email).
+- PATCH company with bank + logo + finance_email → persists; PDF generation re-renders with new branding.
+
+### Env
+```
+EMERGENT_EMAIL_KEY=ek_f6f7...   # provisioned by Emergent, never expose to FE
+EMAIL_FROM_NAME=GreenPeak Nutrition
+```
+
+### Known notes
+- Resend validates recipient domains, so test customers must use real domains (e.g. `delivered@resend.dev` or your own). Seed data `priya.nair@email.com` style addresses will 422 from the proxy — update to a deliverable address before clicking Send.

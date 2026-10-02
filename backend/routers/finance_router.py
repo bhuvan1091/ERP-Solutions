@@ -61,6 +61,7 @@ from finance_schemas import (
 from auth import require_permission
 from helpers import log_audit
 from invoice_pdf import generate_invoice_pdf
+from email_service import send_email
 
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
@@ -383,6 +384,76 @@ def download_invoice_pdf(invoice_id: str, db: Session = Depends(get_db),
         "Cache-Control": "no-store",
     }
     return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers=headers)
+
+
+@router.post("/invoices/{invoice_id}/email")
+async def email_invoice(
+    invoice_id: str, db: Session = Depends(get_db),
+    current: User = Depends(require_permission("finance:write")),
+):
+    """Email the invoice PDF to the counterparty. Templates and recipients are
+    strictly derived from server-side records - caller only supplies the ID (G4)."""
+    inv = db.query(Invoice).options(
+        selectinload(Invoice.lines).selectinload(InvoiceLine.product),
+    ).filter(Invoice.id == invoice_id).first()
+    if not inv:
+        raise HTTPException(404, "Invoice not found")
+    if inv.status == InvoiceStatus.CANCELLED:
+        raise HTTPException(400, "Cannot email a cancelled invoice")
+
+    # Only customer invoices are emailable (supplier bills go to us, not to them)
+    if inv.invoice_type != InvoiceType.CUSTOMER:
+        raise HTTPException(400, "Only customer invoices can be emailed")
+
+    customer = inv.customer
+    if not customer or not customer.email:
+        raise HTTPException(400, "Customer has no email on file")
+
+    company = db.query(Company).first()
+    pdf_bytes = generate_invoice_pdf(inv, company)
+
+    subject = f"Invoice {inv.invoice_number} from {company.name}"
+    contact_name = customer.contact_person or customer.name
+    amount_due = Decimal(inv.total) - Decimal(inv.amount_paid)
+    due_date = inv.due_date.strftime("%d %b %Y") if inv.due_date else "the due date on the invoice"
+    html = (
+        '<table role="presentation" width="100%" style="font-family:Arial,sans-serif;color:#0f172a">'
+        '<tr><td style="padding:24px">'
+        f'<p>Dear {_html_escape(contact_name)},</p>'
+        f'<p>Please find attached invoice <strong>{_html_escape(inv.invoice_number)}</strong> '
+        f'for the amount of <strong>INR {amount_due:,.2f}</strong>, due by <strong>{due_date}</strong>.</p>'
+        '<p>Payment details are on the invoice. If you have any questions about this invoice, '
+        'please reply to this email and our team will get back to you.</p>'
+        f'<p>Thank you for your business.</p>'
+        f'<p style="margin-top:24px">Regards,<br/><strong>{_html_escape(company.name)}</strong></p>'
+        f'<hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0"/>'
+        f'<p style="font-size:12px;color:#64748b">Sent by {_html_escape(company.name)} via GreenPeak Nutrition ERP. '
+        'We never ask for your password or card details by email.</p>'
+        '</td></tr></table>'
+    )
+
+    try:
+        reply_to = company.finance_email or None
+        email_id = await send_email(
+            to=customer.email, subject=subject, html=html,
+            attachment_bytes=pdf_bytes,
+            attachment_filename=f"{inv.invoice_number}.pdf",
+            reply_to=reply_to,
+        )
+    except Exception as e:
+        raise HTTPException(502, f"Failed to send email: {str(e)[:200]}")
+
+    log_audit(db, current, "EMAIL", "Invoice", inv.id, {
+        "invoice_number": inv.invoice_number, "to": customer.email, "email_id": email_id,
+    })
+    db.commit()
+    return {"status": "sent", "to": customer.email, "email_id": email_id,
+            "invoice_number": inv.invoice_number}
+
+
+def _html_escape(s: str) -> str:
+    from html import escape
+    return escape(s or "")
 
 
 # ----- Customer invoice from Sales Order -----
